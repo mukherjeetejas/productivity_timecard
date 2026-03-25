@@ -15,5 +15,5 @@ public class User {
 
     private String name;
 
-    private Map<String, Integer> habitStreaks;
+    private Map<String, StreakData> habitStreaks;
 }
