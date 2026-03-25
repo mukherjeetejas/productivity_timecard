@@ -14,8 +14,6 @@ import reactor.core.publisher.Mono;
 public class TimecardController {
     @Autowired
     TimecardRepository timecardRepository;
-    @Value("${dummy}")
-    public String dummy;
 
     @GetMapping("/health")
     Mono<String> health() {
@@ -25,7 +23,6 @@ public class TimecardController {
     @PostMapping("/submit")
     Mono<Timecard> submitTimecard(@RequestBody Timecard timecard) {
         System.out.println("Timecard received: " + timecard.toString());
-        System.out.println(dummy);
         return timecardRepository.save(timecard);
     }
 }
