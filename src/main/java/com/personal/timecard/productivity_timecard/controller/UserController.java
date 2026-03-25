@@ -3,10 +3,12 @@ package com.personal.timecard.productivity_timecard.controller;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
@@ -21,7 +23,7 @@ public class UserController {
 
     @PostMapping
     public Mono<User> createUser(@RequestBody User user) {
-
+        log.info("User create request received: {}", user);
         return userService.createUser(user);
     }
 
@@ -31,28 +33,28 @@ public class UserController {
             @PathVariable String userId,
             @RequestBody User user
     ) {
-
+        log.info("User update request received: {}", user);
         return userService.updateUser(userId, user);
     }
 
 
     @DeleteMapping("/{userId}")
     public Mono<Void> deleteUser(@PathVariable String userId) {
-
+        log.info("User deletion request received: {}", userId);
         return userService.deleteUser(userId);
     }
 
 
     @GetMapping("/{userId}")
     public Mono<User> getUser(@PathVariable String userId) {
-
+        log.info("User request received: {}", userId);
         return userService.getUserById(userId);
     }
 
 
     @GetMapping
     public Flux<User> getAllUsers() {
-
+        log.info("Get all users called");
         return userService.getAllUsers();
     }
 }

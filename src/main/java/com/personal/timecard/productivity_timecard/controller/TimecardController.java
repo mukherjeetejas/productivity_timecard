@@ -2,12 +2,12 @@ package com.personal.timecard.productivity_timecard.controller;
 
 import com.personal.timecard.productivity_timecard.model.Timecard;
 import com.personal.timecard.productivity_timecard.service.TimecardService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.sql.Time;
-
+@Slf4j
 @RestController
 @RequestMapping("/timecard")
 public class TimecardController {
@@ -23,7 +23,7 @@ public class TimecardController {
     @PostMapping("/submit/{userId}")
     Mono<Timecard> submitTimecard(@PathVariable String userId, @RequestBody Timecard timecard) {
         timecard.setUserId(userId);
-        System.out.println("Timecard received: " + timecard);
+        log.info("Timecard received: {}", timecard);
         return timecardService.addTimecard(timecard, userId);
     }
 }

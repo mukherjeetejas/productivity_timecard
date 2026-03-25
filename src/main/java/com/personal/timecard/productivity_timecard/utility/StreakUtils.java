@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.*;
+
 @Component
 @RequiredArgsConstructor
 public class StreakUtils {
@@ -51,7 +53,6 @@ public class StreakUtils {
             user.setHabitStreaks(streaks);
             return Mono.empty();
         }
-
 
         LocalDate yesterday =
                 todayCard.getDate().minusDays(1);
@@ -115,20 +116,20 @@ public class StreakUtils {
 
         switch (habitName) {
 
-            case "dsa":
+            case DSA_HABIT:
 
                 return card.getDsa() != null
                         && card.getDsa().getProblemsSolved() != null
                         && card.getDsa().getProblemsSolved() > 0;
 
 
-            case "gym":
+            case GYM_HABIT:
 
                 return card.getGym() != null
                         && card.getGym().getWorkoutType() != WorkoutType.REST;
 
 
-            case "calories":
+            case CALORIE_INTAKE_HABIT:
 
                 return card.getCalories() != null
                         && Boolean.TRUE.equals(
