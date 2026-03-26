@@ -1,6 +1,7 @@
 package com.personal.timecard.productivity_timecard.service;
 
 import com.personal.timecard.productivity_timecard.enums.WorkoutType;
+import com.personal.timecard.productivity_timecard.error.TimecardAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
 import com.personal.timecard.productivity_timecard.model.Timecard;
 import com.personal.timecard.productivity_timecard.model.User;
@@ -38,6 +39,7 @@ public class TimecardService {
     ) {
 
         LocalDate today = dateUtils.today();
+
         timecard.setUserId(userId);
         timecard.setDate(today);
 
@@ -47,13 +49,30 @@ public class TimecardService {
                         new UserNotFoundException(USER_NOT_FOUND_MESSAGE + userId)
                 ))
                 .flatMap(user ->
+
                         timecardRepository
-                                .save(timecard)
-                                .flatMap(savedCard ->
-                                        updateAllStreaks(user, savedCard)
-                                                .then(userRepository.save(user))
-                                                .thenReturn(savedCard)
-                                )
+                                .findByUserIdAndDate(userId, today)
+                                .hasElement()
+
+                                .flatMap(exists -> {
+
+                                    if (exists) {
+                                        return Mono.error(
+                                                new TimecardAlreadyExistsException(
+                                                        TIMECARD_EXISTS_MESSAGE
+                                                )
+                                        );
+                                    }
+
+                                    return timecardRepository
+                                            .save(timecard)
+                                            .flatMap(savedCard ->
+
+                                                    updateAllStreaks(user, savedCard)
+                                                            .then(userRepository.save(user))
+                                                            .thenReturn(savedCard)
+                                            );
+                                })
                 );
     }
 
@@ -77,7 +96,7 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        DSA_HABIT,
+                        STUDY_LOG,
                         dsaCompleted
                 )
         );
@@ -91,7 +110,7 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        GYM_HABIT,
+                        WORKOUT_LOG,
                         gymCompleted
                 )
         );
@@ -107,7 +126,7 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        CALORIE_INTAKE_HABIT,
+                        NUTRITION_LOG,
                         caloriesCompleted
                 )
         );
