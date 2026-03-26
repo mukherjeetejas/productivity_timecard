@@ -1,5 +1,6 @@
 package com.personal.timecard.productivity_timecard.service;
 
+import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.error.UserAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
 import com.personal.timecard.productivity_timecard.model.User;
@@ -17,27 +18,26 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public Mono<User> createUser(User user) {
+    public Mono<User> createUser(UserRequest user) {
         return userRepository.existsById(user.getId())
                 .flatMap(exists -> {
                     if (exists) {
                         return Mono.error(new UserAlreadyExistsException(
                                 "User already exists with id: " + user.getId()));
                     }
-                    return userRepository.save(user);
+                    User newUser = createUserFromUserRequest(user);
+                    return userRepository.save(newUser);
                 });
     }
 
-    public Mono<User> updateUser(String userId, User updatedUser) {
+    public Mono<User> updateUser(String userId, UserRequest updatedUser) {
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(
                         new UserNotFoundException(USER_NOT_FOUND_MESSAGE + userId)
                 ))
                 .flatMap(existingUser -> {
-
                     existingUser.setName(updatedUser.getName());
-                    existingUser.setHabitStreaks(updatedUser.getHabitStreaks());
-
+                    existingUser.setEmail(updatedUser.getEmail());
                     return userRepository.save(existingUser);
                 });
     }
@@ -61,5 +61,16 @@ public class UserService {
 
     public Flux<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    private User createUserFromUserRequest(UserRequest request) {
+
+        User user = new User();
+
+        user.setId(request.getId());
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+
+        return user;
     }
 }

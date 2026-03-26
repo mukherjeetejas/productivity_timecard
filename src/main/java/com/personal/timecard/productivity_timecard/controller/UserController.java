@@ -1,5 +1,6 @@
 package com.personal.timecard.productivity_timecard.controller;
 
+import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class UserController {
     }
 
     @PostMapping
-    public Mono<User> createUser(@RequestBody User user) {
+    public Mono<User> createUser(@RequestBody UserRequest user) {
         log.info("User create request received: {}", user);
         return userService.createUser(user);
     }
@@ -31,7 +32,7 @@ public class UserController {
     @PutMapping("/{userId}")
     public Mono<User> updateUser(
             @PathVariable String userId,
-            @RequestBody User user
+            @RequestBody UserRequest user
     ) {
         log.info("User update request received: {}", user);
         return userService.updateUser(userId, user);
