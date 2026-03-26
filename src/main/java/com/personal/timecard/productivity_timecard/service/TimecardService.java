@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.*;
@@ -60,6 +61,11 @@ public class TimecardService {
             User user,
             Timecard todayCard
     ) {
+
+        if (user.getHabitStreaks() == null) {
+            user.setHabitStreaks(new HashMap<>());
+        }
+
         List<Mono<Void>> updates = new ArrayList<>();
         // DSA
         boolean dsaCompleted =

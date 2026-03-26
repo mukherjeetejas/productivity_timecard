@@ -35,6 +35,8 @@ public class StreakUtils {
                         ? new HashMap<>()
                         : user.getHabitStreaks();
 
+        user.setHabitStreaks(streaks);
+
 
         StreakData streakData =
                 streaks.getOrDefault(habitName, new StreakData());
