@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class GymActivity {
+public class WorkoutLog {
 
     private WorkoutType workoutType;
 

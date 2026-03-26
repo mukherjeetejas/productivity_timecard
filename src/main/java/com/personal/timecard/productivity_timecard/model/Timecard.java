@@ -17,11 +17,11 @@ public class Timecard {
 
     private LocalDate date;
 
-    private DsaActivity dsa;
+    private StudyLog dsa;
 
-    private GymActivity gym;
+    private WorkoutLog gym;
 
-    private CalorieActivity calories;
+    private NutritionLog calories;
 
     private Map<String, SimpleActivity> habits;
 
