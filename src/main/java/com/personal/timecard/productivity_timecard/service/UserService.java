@@ -1,5 +1,6 @@
 package com.personal.timecard.productivity_timecard.service;
 
+import com.personal.timecard.productivity_timecard.error.UserAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.repository.UserRepository;
@@ -17,7 +18,14 @@ public class UserService {
     private final UserRepository userRepository;
 
     public Mono<User> createUser(User user) {
-        return userRepository.save(user);
+        return userRepository.existsById(user.getId())
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.error(new UserAlreadyExistsException(
+                                "User already exists with id: " + user.getId()));
+                    }
+                    return userRepository.save(user);
+                });
     }
 
     public Mono<User> updateUser(String userId, User updatedUser) {
