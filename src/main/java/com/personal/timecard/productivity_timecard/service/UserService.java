@@ -1,14 +1,22 @@
 package com.personal.timecard.productivity_timecard.service;
 
+import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.error.UserAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
+import com.personal.timecard.productivity_timecard.model.StreakData;
 import com.personal.timecard.productivity_timecard.model.User;
+import com.personal.timecard.productivity_timecard.repository.TimecardRepository;
 import com.personal.timecard.productivity_timecard.repository.UserRepository;
+import com.personal.timecard.productivity_timecard.utility.DateUtils;
+import com.personal.timecard.productivity_timecard.utility.UserUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDate;
+import java.util.Map;
 
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.USER_NOT_FOUND_MESSAGE;
 
@@ -17,6 +25,9 @@ import static com.personal.timecard.productivity_timecard.constant.ApplicationCo
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserUtils userUtils;
+    private final TimecardRepository timecardRepository;
+    private final DateUtils dateUtils;
 
     public Mono<User> createUser(UserRequest user) {
         return userRepository.existsById(user.getId())
@@ -64,13 +75,51 @@ public class UserService {
     }
 
     private User createUserFromUserRequest(UserRequest request) {
-
         User user = new User();
-
         user.setId(request.getId());
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-
         return user;
+    }
+
+    public Mono<Map<String, StreakData>> getUserStreaks(String userId) {
+        return userRepository
+                .findById(userId)
+                .switchIfEmpty(Mono.error(
+                        new UserNotFoundException(
+                                USER_NOT_FOUND_MESSAGE + userId
+                        )
+                ))
+                .map(user -> {
+                    if (user.getHabitStreaks() == null) {
+                        return Map.of();
+                    }
+                    return user.getHabitStreaks();
+                });
+    }
+
+    public Mono<DashboardResponse> getDashboard(String userId) {
+        LocalDate today = dateUtils.today();
+        Mono<Boolean> todaySubmittedMono =
+                timecardRepository
+                        .findByUserIdAndDate(userId, today)
+                        .hasElement();
+
+        Mono<User> userMono =
+                userRepository
+                        .findById(userId)
+                        .switchIfEmpty(Mono.error(
+                                new UserNotFoundException(
+                                        USER_NOT_FOUND_MESSAGE + userId
+                                )
+                        ));
+
+        return Mono.zip(todaySubmittedMono, userMono)
+                .map(tuple ->
+                        userUtils.buildDashboardResponse(
+                                tuple.getT2(),
+                                tuple.getT1()
+                        )
+                );
     }
 }

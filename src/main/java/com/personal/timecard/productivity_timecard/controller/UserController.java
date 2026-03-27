@@ -1,6 +1,8 @@
 package com.personal.timecard.productivity_timecard.controller;
 
+import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
+import com.personal.timecard.productivity_timecard.model.StreakData;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -57,5 +61,17 @@ public class UserController {
     public Flux<User> getAllUsers() {
         log.info("Get all users called");
         return userService.getAllUsers();
+    }
+
+    @GetMapping("/{userId}/streaks")
+    public Mono<Map<String, StreakData>> getUserStreaks(@PathVariable String userId) {
+        log.info("Fetching streaks for user {}", userId);
+        return userService.getUserStreaks(userId);
+    }
+
+    @GetMapping("/{userId}/dashboard")
+    public Mono<DashboardResponse> getDashboard(@PathVariable String userId) {
+        log.info("Fetching dashboard for user {}", userId);
+        return userService.getDashboard(userId);
     }
 }
