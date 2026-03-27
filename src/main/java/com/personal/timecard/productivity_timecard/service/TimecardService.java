@@ -11,6 +11,7 @@ import com.personal.timecard.productivity_timecard.utility.DateUtils;
 import com.personal.timecard.productivity_timecard.utility.StreakUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -150,5 +151,18 @@ public class TimecardService {
                     );
         }
         return Mono.when(updates);
+    }
+
+    public Mono<Timecard> getTodayTimecard(String userId) {
+        LocalDate today = dateUtils.today();
+        return timecardRepository.findByUserIdAndDate(userId, today);
+    }
+
+    public Mono<Timecard> getTimecardByDate(String userId, LocalDate date) {
+        return timecardRepository.findByUserIdAndDate(userId, date);
+    }
+
+    public Flux<Timecard> getTimecardsBetweenDates(String userId, LocalDate start, LocalDate end) {
+        return timecardRepository.findByUserIdAndDateBetween(userId, start, end);
     }
 }
