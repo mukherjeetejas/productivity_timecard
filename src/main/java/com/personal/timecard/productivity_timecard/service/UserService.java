@@ -1,14 +1,15 @@
 package com.personal.timecard.productivity_timecard.service;
 
 import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
+import com.personal.timecard.productivity_timecard.dto.BodyFatRequest;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.error.UserAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
-import com.personal.timecard.productivity_timecard.model.StreakData;
-import com.personal.timecard.productivity_timecard.model.User;
+import com.personal.timecard.productivity_timecard.model.*;
 import com.personal.timecard.productivity_timecard.repository.TimecardRepository;
 import com.personal.timecard.productivity_timecard.repository.UserRepository;
 import com.personal.timecard.productivity_timecard.utility.DateUtils;
+import com.personal.timecard.productivity_timecard.utility.BodyFatUtils;
 import com.personal.timecard.productivity_timecard.utility.UserUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.USER_NOT_FOUND_MESSAGE;
@@ -28,6 +30,7 @@ public class UserService {
     private final UserUtils userUtils;
     private final TimecardRepository timecardRepository;
     private final DateUtils dateUtils;
+    private final BodyFatUtils bodyFatUtils;
 
     public Mono<User> createUser(UserRequest user) {
         return userRepository.existsById(user.getId())
@@ -47,8 +50,7 @@ public class UserService {
                         new UserNotFoundException(USER_NOT_FOUND_MESSAGE + userId)
                 ))
                 .flatMap(existingUser -> {
-                    existingUser.setName(updatedUser.getName());
-                    existingUser.setEmail(updatedUser.getEmail());
+                    userUtils.updateUserFields(existingUser, updatedUser);
                     return userRepository.save(existingUser);
                 });
     }
@@ -79,6 +81,8 @@ public class UserService {
         user.setId(request.getId());
         user.setName(request.getName());
         user.setEmail(request.getEmail());
+        user.setHeight(request.getHeight());
+        user.setGender(request.getGender());
         return user;
     }
 
@@ -121,5 +125,111 @@ public class UserService {
                                 tuple.getT1()
                         )
                 );
+    }
+
+    public Mono<Double> calculateBodyFat(String userId, BodyFatRequest request) {
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(
+                        new UserNotFoundException(
+                                USER_NOT_FOUND_MESSAGE + userId
+                        )
+                ))
+                .flatMap(user -> {
+
+                    double fatPercentage =
+                            bodyFatUtils.calculateFatPercentage(
+                                    user.getGender(),
+                                    user.getHeight(),
+                                    request
+                            );
+
+                    BodyFat fat = new BodyFat();
+
+                    fat.setNeckCircumference(request.getNeckCircumference());
+
+                    fat.setWaistCircumference(request.getWaistCircumference());
+
+                    fat.setHipCircumference(request.getHipCircumference());
+
+                    fat.setCalculatedFatPercentage(fatPercentage);
+
+                    fat.setRecordedDate(dateUtils.today());
+
+                    if (user.getBodyFats() == null) {
+                        user.setBodyFats(new ArrayList<>());
+                    }
+
+                    user.getBodyFats().add(fat);
+
+                    return userRepository
+                            .save(user)
+                            .thenReturn(fatPercentage);
+                });
+    }
+
+    public Flux<BodyFat> getBodyFatHistory(String userId) {
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(
+                        new UserNotFoundException(
+                                USER_NOT_FOUND_MESSAGE + userId
+                        )
+                ))
+                .flatMapMany(user -> {
+                    if (user.getBodyFats() == null) {
+                        return Flux.empty();
+                    }
+                    return Flux.fromIterable(
+                            user.getBodyFats()
+                    );
+                });
+    }
+
+    public Flux<Weight> getUserWeightHistory(String userId) {
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(
+                        new UserNotFoundException(
+                                USER_NOT_FOUND_MESSAGE + userId
+                        )
+                ))
+                .flatMapMany(user -> {
+
+                    if (user.getUserWeights() == null) {
+                        return Flux.empty();
+                    }
+
+                    return Flux.fromIterable(
+                            user.getUserWeights()
+                    );
+                });
+    }
+
+    public Mono<Weight> addWeight(String userId, WeightRequest request) {
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(
+                        new UserNotFoundException(
+                                USER_NOT_FOUND_MESSAGE + userId
+                        )
+                ))
+                .flatMap(user -> {
+
+                    Weight weight = new Weight();
+
+                    weight.setWeight(request.getWeight());
+                    weight.setDate(dateUtils.today());
+
+                    if (user.getUserWeights() == null) {
+                        user.setUserWeights(new ArrayList<>());
+                    }
+
+                    user.getUserWeights().add(weight);
+
+                    return userRepository
+                            .save(user)
+                            .thenReturn(weight);
+                });
     }
 }

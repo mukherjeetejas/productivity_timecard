@@ -1,9 +1,9 @@
 package com.personal.timecard.productivity_timecard.controller;
 
 import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
+import com.personal.timecard.productivity_timecard.dto.BodyFatRequest;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
-import com.personal.timecard.productivity_timecard.model.StreakData;
-import com.personal.timecard.productivity_timecard.model.User;
+import com.personal.timecard.productivity_timecard.model.*;
 import com.personal.timecard.productivity_timecard.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,5 +73,31 @@ public class UserController {
     public Mono<DashboardResponse> getDashboard(@PathVariable String userId) {
         log.info("Fetching dashboard for user {}", userId);
         return userService.getDashboard(userId);
+    }
+
+    @PostMapping("/{userId}/bodyFat")
+    public Mono<Double> calculateBodyFat(@PathVariable String userId, @RequestBody BodyFatRequest request) {
+        log.info("Fat percentage calculation request received for user {}", userId);
+        return userService.calculateBodyFat(userId, request);
+    }
+
+
+    @GetMapping("/{userId}/bodyFat")
+    public Flux<BodyFat> getBodyFatHistory(@PathVariable String userId) {
+        log.info("Fetching fat percentage history for user {}", userId);
+        return userService.getBodyFatHistory(userId);
+    }
+
+
+    @GetMapping("/{userId}/weightHistory")
+    public Flux<Weight> getUserWeightHistory(@PathVariable String userId) {
+        log.info("Fetching weight history for user {}", userId);
+        return userService.getUserWeightHistory(userId);
+    }
+
+    @PostMapping("/{userId}/weight")
+    public Mono<Weight> addWeight(@PathVariable String userId, @RequestBody WeightRequest request) {
+        log.info("Weight entry request received for user {}", userId);
+        return userService.addWeight(userId, request);
     }
 }

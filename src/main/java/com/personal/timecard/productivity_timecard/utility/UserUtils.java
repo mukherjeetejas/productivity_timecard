@@ -1,11 +1,13 @@
 package com.personal.timecard.productivity_timecard.utility;
 
 import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
+import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.model.StreakData;
 import com.personal.timecard.productivity_timecard.model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -53,5 +55,20 @@ public class UserUtils {
                 .activeStreaks(active)
                 .longestStreaks(highest)
                 .build();
+    }
+
+    public void updateUserFields(User existingUser, UserRequest updatedUser) {
+
+        Optional.ofNullable(updatedUser.getName())
+                .ifPresent(existingUser::setName);
+
+        Optional.ofNullable(updatedUser.getEmail())
+                .ifPresent(existingUser::setEmail);
+
+        Optional.of(updatedUser.getHeight())
+                .ifPresent(existingUser::setHeight);
+
+        Optional.ofNullable(updatedUser.getGender())
+                .ifPresent(existingUser::setGender);
     }
 }
