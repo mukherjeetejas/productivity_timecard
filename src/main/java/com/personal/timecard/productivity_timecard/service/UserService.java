@@ -2,7 +2,9 @@ package com.personal.timecard.productivity_timecard.service;
 
 import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
 import com.personal.timecard.productivity_timecard.dto.BodyFatRequest;
+import com.personal.timecard.productivity_timecard.dto.TempAuthentication;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
+import com.personal.timecard.productivity_timecard.error.AuthenticationException;
 import com.personal.timecard.productivity_timecard.error.UserAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
 import com.personal.timecard.productivity_timecard.model.*;
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.AUTHENTICATION_EXCEPTION_MESSAGE;
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.USER_NOT_FOUND_MESSAGE;
 
 @Service
@@ -230,6 +233,17 @@ public class UserService {
                     return userRepository
                             .save(user)
                             .thenReturn(weight);
+                });
+    }
+
+    public Mono<User> tempAuthenticate(String userId, TempAuthentication tempAuthentication) {
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(USER_NOT_FOUND_MESSAGE + userId)))
+                .flatMap(user -> {
+                    if(!user.getTempAuthentication().equals(tempAuthentication.getTempAuthentication())) {
+                        return Mono.error(new AuthenticationException(AUTHENTICATION_EXCEPTION_MESSAGE));
+                    }
+                    return Mono.just(user);
                 });
     }
 }

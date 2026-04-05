@@ -62,6 +62,9 @@ public class UserUtils {
         Optional.ofNullable(updatedUser.getName())
                 .ifPresent(existingUser::setName);
 
+        Optional.ofNullable(updatedUser.getTempAuthentication())
+                .ifPresent(existingUser::setTempAuthentication);
+
         Optional.ofNullable(updatedUser.getEmail())
                 .ifPresent(existingUser::setEmail);
 

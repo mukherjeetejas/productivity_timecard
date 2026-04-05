@@ -2,6 +2,7 @@ package com.personal.timecard.productivity_timecard.controller;
 
 import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
 import com.personal.timecard.productivity_timecard.dto.BodyFatRequest;
+import com.personal.timecard.productivity_timecard.dto.TempAuthentication;
 import com.personal.timecard.productivity_timecard.dto.UserRequest;
 import com.personal.timecard.productivity_timecard.model.*;
 import com.personal.timecard.productivity_timecard.service.UserService;
@@ -99,5 +100,11 @@ public class UserController {
     public Mono<Weight> addWeight(@PathVariable String userId, @RequestBody WeightRequest request) {
         log.info("Weight entry request received for user {}", userId);
         return userService.addWeight(userId, request);
+    }
+
+    @GetMapping("/{userId}/authenticate")
+    public Mono<User> addWeight(@PathVariable String userId, @RequestBody TempAuthentication request) {
+        log.info("Authenticating user with userId {}", userId);
+        return userService.tempAuthenticate(userId, request);
     }
 }

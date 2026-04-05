@@ -15,6 +15,8 @@ public class User {
     @Id
     private String id;
 
+    private String tempAuthentication; // temp authentication for frontend. will be replaced
+
     private String name;
 
     private String email;

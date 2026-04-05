@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class UserRequest {
     private String id;
+    private String tempAuthentication; // update password (temp)
     private String name;
     private String email;
     private Gender gender;
