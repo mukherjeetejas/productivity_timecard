@@ -86,6 +86,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setHeight(request.getHeight());
         user.setGender(request.getGender());
+        user.setTempAuthentication(request.getTempAuthentication());
         return user;
     }
 
