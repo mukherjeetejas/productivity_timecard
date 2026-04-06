@@ -102,7 +102,7 @@ public class UserController {
         return userService.addWeight(userId, request);
     }
 
-    @GetMapping("/{userId}/authenticate")
+    @PostMapping("/{userId}/authenticate")
     public Mono<User> addWeight(@PathVariable String userId, @RequestBody TempAuthentication request) {
         log.info("Authenticating user with userId {}", userId);
         return userService.tempAuthenticate(userId, request);
