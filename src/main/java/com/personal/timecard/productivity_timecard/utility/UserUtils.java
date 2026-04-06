@@ -68,7 +68,7 @@ public class UserUtils {
         Optional.ofNullable(updatedUser.getEmail())
                 .ifPresent(existingUser::setEmail);
 
-        Optional.of(updatedUser.getHeight())
+        Optional.ofNullable(updatedUser.getHeight())
                 .ifPresent(existingUser::setHeight);
 
         Optional.ofNullable(updatedUser.getGender())
