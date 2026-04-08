@@ -3,6 +3,7 @@ package com.personal.timecard.productivity_timecard.service;
 import com.personal.timecard.productivity_timecard.enums.WorkoutType;
 import com.personal.timecard.productivity_timecard.error.TimecardAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
+import com.personal.timecard.productivity_timecard.model.StreakData;
 import com.personal.timecard.productivity_timecard.model.Timecard;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.repository.TimecardRepository;
@@ -15,9 +16,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.*;
 
@@ -86,6 +85,9 @@ public class TimecardService {
             user.setHabitStreaks(new HashMap<>());
         }
 
+        Map<String, StreakData> existingStreaks =
+                user.getHabitStreaks();
+
         List<Mono<Void>> updates = new ArrayList<>();
         // DSA
         boolean dsaCompleted =
@@ -132,7 +134,11 @@ public class TimecardService {
                 )
         );
 
-        // Dynamic habits
+        Set<String> todayHabitNames =
+                todayCard.getHabits() == null
+                        ? Collections.emptySet()
+                        : todayCard.getHabits().keySet();
+
         if (todayCard.getHabits() != null) {
 
             todayCard.getHabits()
@@ -150,6 +156,26 @@ public class TimecardService {
                             )
                     );
         }
+
+        existingStreaks.keySet()
+                .stream()
+                .filter(existingHabit ->
+                        !existingHabit.equals(STUDY_LOG)
+                                && !existingHabit.equals(WORKOUT_LOG)
+                                && !existingHabit.equals(NUTRITION_LOG)
+                                && !todayHabitNames.contains(existingHabit)
+                )
+                .forEach(existingHabit ->
+
+                        updates.add(
+                                streakUtils.updateStreak(
+                                        user,
+                                        todayCard,
+                                        existingHabit,
+                                        false
+                                )
+                        )
+                );
         return Mono.when(updates);
     }
 
