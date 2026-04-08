@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -106,5 +107,12 @@ public class UserController {
     public Mono<User> addWeight(@PathVariable String userId, @RequestBody TempAuthentication request) {
         log.info("Authenticating user with userId {}", userId);
         return userService.tempAuthenticate(userId, request);
+    }
+
+
+    @GetMapping("/{userId}/habits")
+    public Mono<List<String>> getHabits(@PathVariable String userId) {
+        log.info("Fetching habits for user with userId {}", userId);
+        return userService.getHabits(userId);
     }
 }

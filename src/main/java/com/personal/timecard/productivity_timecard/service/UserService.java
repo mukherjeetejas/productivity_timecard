@@ -20,10 +20,11 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.AUTHENTICATION_EXCEPTION_MESSAGE;
-import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.USER_NOT_FOUND_MESSAGE;
+import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -245,6 +246,34 @@ public class UserService {
                         return Mono.error(new AuthenticationException(AUTHENTICATION_EXCEPTION_MESSAGE));
                     }
                     return Mono.just(user);
+                });
+    }
+
+    public Mono<List<String>> getHabits(String userId) {
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(
+                        Mono.error(
+                                new UserNotFoundException(
+                                        USER_NOT_FOUND_MESSAGE + userId
+                                )
+                        )
+                )
+                .map(user -> {
+
+                    if (user.getHabitStreaks() == null) {
+                        return Collections.emptyList();
+                    }
+
+                    return user.getHabitStreaks()
+                            .keySet()
+                            .stream()
+                            .filter(habit ->
+                                    !habit.equals(STUDY_LOG)
+                                            && !habit.equals(WORKOUT_LOG)
+                                            && !habit.equals(NUTRITION_LOG)
+                            )
+                            .toList();
                 });
     }
 }
