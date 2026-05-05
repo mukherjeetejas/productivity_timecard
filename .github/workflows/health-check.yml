@@ -1,9 +1,9 @@
 name: Hourly Health Check
 
 on:
-  schedule:
-    - cron: '*/14 * * * *'  # Every 14 minutes (keeps app warm)
   workflow_dispatch:       # Allows manual trigger from GitHub UI
+  schedule: 
+    - cron: '*/14 * * * *'  # Every 14 minutes (keeps app warm)
 
 jobs:
   ping-endpoints:
