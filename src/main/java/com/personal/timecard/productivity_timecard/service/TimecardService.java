@@ -1,7 +1,9 @@
 package com.personal.timecard.productivity_timecard.service;
 
 import com.personal.timecard.productivity_timecard.enums.WorkoutType;
+import com.personal.timecard.productivity_timecard.error.TimecardAlreadyExistsException;
 import com.personal.timecard.productivity_timecard.error.UserNotFoundException;
+import com.personal.timecard.productivity_timecard.model.StreakData;
 import com.personal.timecard.productivity_timecard.model.Timecard;
 import com.personal.timecard.productivity_timecard.model.User;
 import com.personal.timecard.productivity_timecard.repository.TimecardRepository;
@@ -10,11 +12,11 @@ import com.personal.timecard.productivity_timecard.utility.DateUtils;
 import com.personal.timecard.productivity_timecard.utility.StreakUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.personal.timecard.productivity_timecard.constant.ApplicationConstants.*;
 
@@ -37,6 +39,7 @@ public class TimecardService {
     ) {
 
         LocalDate today = dateUtils.today();
+
         timecard.setUserId(userId);
         timecard.setDate(today);
 
@@ -46,13 +49,30 @@ public class TimecardService {
                         new UserNotFoundException(USER_NOT_FOUND_MESSAGE + userId)
                 ))
                 .flatMap(user ->
+
                         timecardRepository
-                                .save(timecard)
-                                .flatMap(savedCard ->
-                                        updateAllStreaks(user, savedCard)
-                                                .then(userRepository.save(user))
-                                                .thenReturn(savedCard)
-                                )
+                                .findByUserIdAndDate(userId, today)
+                                .hasElement()
+
+                                .flatMap(exists -> {
+
+                                    if (exists) {
+                                        return Mono.error(
+                                                new TimecardAlreadyExistsException(
+                                                        TIMECARD_EXISTS_MESSAGE
+                                                )
+                                        );
+                                    }
+
+                                    return timecardRepository
+                                            .save(timecard)
+                                            .flatMap(savedCard ->
+
+                                                    updateAllStreaks(user, savedCard)
+                                                            .then(userRepository.save(user))
+                                                            .thenReturn(savedCard)
+                                            );
+                                })
                 );
     }
 
@@ -60,6 +80,14 @@ public class TimecardService {
             User user,
             Timecard todayCard
     ) {
+
+        if (user.getHabitStreaks() == null) {
+            user.setHabitStreaks(new HashMap<>());
+        }
+
+        Map<String, StreakData> existingStreaks =
+                user.getHabitStreaks();
+
         List<Mono<Void>> updates = new ArrayList<>();
         // DSA
         boolean dsaCompleted =
@@ -71,7 +99,7 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        DSA_HABIT,
+                        STUDY_LOG,
                         dsaCompleted
                 )
         );
@@ -85,7 +113,7 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        GYM_HABIT,
+                        WORKOUT_LOG,
                         gymCompleted
                 )
         );
@@ -101,12 +129,16 @@ public class TimecardService {
                 streakUtils.updateStreak(
                         user,
                         todayCard,
-                        CALORIE_INTAKE_HABIT,
+                        NUTRITION_LOG,
                         caloriesCompleted
                 )
         );
 
-        // Dynamic habits
+        Set<String> todayHabitNames =
+                todayCard.getHabits() == null
+                        ? Collections.emptySet()
+                        : todayCard.getHabits().keySet();
+
         if (todayCard.getHabits() != null) {
 
             todayCard.getHabits()
@@ -124,6 +156,39 @@ public class TimecardService {
                             )
                     );
         }
+
+        existingStreaks.keySet()
+                .stream()
+                .filter(existingHabit ->
+                        !existingHabit.equals(STUDY_LOG)
+                                && !existingHabit.equals(WORKOUT_LOG)
+                                && !existingHabit.equals(NUTRITION_LOG)
+                                && !todayHabitNames.contains(existingHabit)
+                )
+                .forEach(existingHabit ->
+
+                        updates.add(
+                                streakUtils.updateStreak(
+                                        user,
+                                        todayCard,
+                                        existingHabit,
+                                        false
+                                )
+                        )
+                );
         return Mono.when(updates);
+    }
+
+    public Mono<Timecard> getTodayTimecard(String userId) {
+        LocalDate today = dateUtils.today();
+        return timecardRepository.findByUserIdAndDate(userId, today);
+    }
+
+    public Mono<Timecard> getTimecardByDate(String userId, LocalDate date) {
+        return timecardRepository.findByUserIdAndDate(userId, date);
+    }
+
+    public Flux<Timecard> getTimecardsBetweenDates(String userId, LocalDate start, LocalDate end) {
+        return timecardRepository.findByUserIdAndDateBetween(userId, start, end);
     }
 }

@@ -3,11 +3,11 @@ package com.personal.timecard.productivity_timecard.model;
 import lombok.Data;
 
 @Data
-public class DsaActivity {
+public class StudyLog {
 
     private Integer problemsSolved;
 
-    private Double hoursSpent;
+    private Double minutesSpent;
 
     private String topic;
 

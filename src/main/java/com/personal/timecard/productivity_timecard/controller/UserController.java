@@ -1,12 +1,19 @@
 package com.personal.timecard.productivity_timecard.controller;
 
-import com.personal.timecard.productivity_timecard.model.User;
+import com.personal.timecard.productivity_timecard.dto.DashboardResponse;
+import com.personal.timecard.productivity_timecard.dto.BodyFatRequest;
+import com.personal.timecard.productivity_timecard.dto.TempAuthentication;
+import com.personal.timecard.productivity_timecard.dto.UserRequest;
+import com.personal.timecard.productivity_timecard.model.*;
 import com.personal.timecard.productivity_timecard.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -22,7 +29,7 @@ public class UserController {
     }
 
     @PostMapping
-    public Mono<User> createUser(@RequestBody User user) {
+    public Mono<User> createUser(@RequestBody UserRequest user) {
         log.info("User create request received: {}", user);
         return userService.createUser(user);
     }
@@ -31,7 +38,7 @@ public class UserController {
     @PutMapping("/{userId}")
     public Mono<User> updateUser(
             @PathVariable String userId,
-            @RequestBody User user
+            @RequestBody UserRequest user
     ) {
         log.info("User update request received: {}", user);
         return userService.updateUser(userId, user);
@@ -56,5 +63,56 @@ public class UserController {
     public Flux<User> getAllUsers() {
         log.info("Get all users called");
         return userService.getAllUsers();
+    }
+
+    @GetMapping("/{userId}/streaks")
+    public Mono<Map<String, StreakData>> getUserStreaks(@PathVariable String userId) {
+        log.info("Fetching streaks for user {}", userId);
+        return userService.getUserStreaks(userId);
+    }
+
+    @GetMapping("/{userId}/dashboard")
+    public Mono<DashboardResponse> getDashboard(@PathVariable String userId) {
+        log.info("Fetching dashboard for user {}", userId);
+        return userService.getDashboard(userId);
+    }
+
+    @PostMapping("/{userId}/bodyFat")
+    public Mono<Double> calculateBodyFat(@PathVariable String userId, @RequestBody BodyFatRequest request) {
+        log.info("Fat percentage calculation request received for user {}", userId);
+        return userService.calculateBodyFat(userId, request);
+    }
+
+
+    @GetMapping("/{userId}/bodyFat")
+    public Flux<BodyFat> getBodyFatHistory(@PathVariable String userId) {
+        log.info("Fetching fat percentage history for user {}", userId);
+        return userService.getBodyFatHistory(userId);
+    }
+
+
+    @GetMapping("/{userId}/weightHistory")
+    public Flux<Weight> getUserWeightHistory(@PathVariable String userId) {
+        log.info("Fetching weight history for user {}", userId);
+        return userService.getUserWeightHistory(userId);
+    }
+
+    @PostMapping("/{userId}/weight")
+    public Mono<Weight> addWeight(@PathVariable String userId, @RequestBody WeightRequest request) {
+        log.info("Weight entry request received for user {}", userId);
+        return userService.addWeight(userId, request);
+    }
+
+    @PostMapping("/{userId}/authenticate")
+    public Mono<User> addWeight(@PathVariable String userId, @RequestBody TempAuthentication request) {
+        log.info("Authenticating user with userId {}", userId);
+        return userService.tempAuthenticate(userId, request);
+    }
+
+
+    @GetMapping("/{userId}/habits")
+    public Mono<List<String>> getHabits(@PathVariable String userId) {
+        log.info("Fetching habits for user with userId {}", userId);
+        return userService.getHabits(userId);
     }
 }

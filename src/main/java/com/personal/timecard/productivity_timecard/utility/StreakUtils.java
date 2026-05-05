@@ -35,6 +35,8 @@ public class StreakUtils {
                         ? new HashMap<>()
                         : user.getHabitStreaks();
 
+        user.setHabitStreaks(streaks);
+
 
         StreakData streakData =
                 streaks.getOrDefault(habitName, new StreakData());
@@ -116,20 +118,20 @@ public class StreakUtils {
 
         switch (habitName) {
 
-            case DSA_HABIT:
+            case STUDY_LOG:
 
                 return card.getDsa() != null
                         && card.getDsa().getProblemsSolved() != null
                         && card.getDsa().getProblemsSolved() > 0;
 
 
-            case GYM_HABIT:
+            case WORKOUT_LOG:
 
                 return card.getGym() != null
                         && card.getGym().getWorkoutType() != WorkoutType.REST;
 
 
-            case CALORIE_INTAKE_HABIT:
+            case NUTRITION_LOG:
 
                 return card.getCalories() != null
                         && Boolean.TRUE.equals(
