@@ -1,9 +1,9 @@
-name: Hourly Health Check
+name: Health Check + Email
 
 on:
-  workflow_dispatch:       # Allows manual trigger from GitHub UI
-  schedule: 
-    - cron: '*/14 * * * *'  # Every 14 minutes (keeps app warm)
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'   # safer than 14
 
 jobs:
   ping-endpoints:
@@ -11,35 +11,34 @@ jobs:
 
     steps:
       - name: Ping API Health Endpoint
+        id: api
         run: |
-          echo "Hitting API: https://productivity-timecard.onrender.com/user/health"
-          response=$(curl --silent --write-out "\nHTTP_STATUS:%{http_code}" \
-            --location 'https://productivity-timecard.onrender.com/user/health')
-          
-          http_status=$(echo "$response" | grep "HTTP_STATUS" | cut -d: -f2)
-          body=$(echo "$response" | grep -v "HTTP_STATUS")
-          
-          echo "Status Code: $http_status"
-          echo "Response: $body"
-          
-          if [ "$http_status" -ne 200 ]; then
-            echo "❌ API health check FAILED with status $http_status"
-            exit 1
-          fi
-          echo "✅ API health check passed"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://productivity-timecard.onrender.com/user/health)
+          echo "API_STATUS=$STATUS" >> $GITHUB_ENV
 
       - name: Ping UI Login Endpoint
+        id: ui
         run: |
-          echo "Hitting UI: https://productivity-ui-1.onrender.com/login"
-          response=$(curl --silent --write-out "\nHTTP_STATUS:%{http_code}" \
-            --location 'https://productivity-ui-1.onrender.com/login')
-          
-          http_status=$(echo "$response" | grep "HTTP_STATUS" | cut -d: -f2)
-          
-          echo "Status Code: $http_status"
-          
-          if [ "$http_status" -ne 200 ]; then
-            echo "❌ UI health check FAILED with status $http_status"
-            exit 1
-          fi
-          echo "✅ UI health check passed"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://productivity-ui-1.onrender.com/login)
+          echo "UI_STATUS=$STATUS" >> $GITHUB_ENV
+
+      - name: Send Email on Success
+        if: env.API_STATUS == '200' && env.UI_STATUS == '200'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Health Check Passed"
+          to: your-email@gmail.com
+          from: your-email@gmail.com
+          body: |
+            API Status: ${{ env.API_STATUS }}
+            UI Status: ${{ env.UI_STATUS }}
+            Time: $(date)
+
+      - name: Fail if any endpoint failed
+        if: env.API_STATUS != '200' || env.UI_STATUS != '200'
+        run: exit 1
