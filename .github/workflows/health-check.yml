@@ -32,12 +32,11 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ Health Check Passed"
-          to: your-email@gmail.com
-          from: your-email@gmail.com
+          to: mukherjeetejas21@gmail.com
+          from: mukherjeetejas21@gmail.com
           body: |
             API Status: ${{ env.API_STATUS }}
             UI Status: ${{ env.UI_STATUS }}
-            Time: $(date)
 
       - name: Fail if any endpoint failed
         if: env.API_STATUS != '200' || env.UI_STATUS != '200'
